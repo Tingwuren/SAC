@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SAC</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+<button id="onButton">开启从控机</button>
+
+<script>
+    $(document).ready(function() {
+        $('#onButton').click(function() {
+            $.ajax({
+                type: 'POST',
+                url: '/sac/on',
+                contentType: 'application/json',
+                success: function() {
+                    // 请求成功后跳转到认证页面
+                    window.location.href = '/auth';
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.log('AJAX error:', textStatus, errorThrown);
+                    alert('无法开启从控机');
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>
