@@ -16,4 +16,9 @@ public class StartController {
         return "auth";
     }
 
+    @RequestMapping("workspace")
+    public String workspace() {
+        return "workspace";
+    }
+
 }

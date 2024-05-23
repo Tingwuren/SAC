@@ -7,8 +7,8 @@
 </head>
 <body>
 <form id="authForm">
-    <label for="roomNumber">房间号：</label>
-    <input type="text" id="roomNumber" name="roomNumber" required>
+    <label for="roomID">房间号：</label>
+    <input type="text" id="roomID" name="roomID" required>
     <br>
     <label for="idNumber">身份证号：</label>
     <input type="text" id="idNumber" name="idNumber" required>
@@ -23,7 +23,7 @@
         $('#authForm').submit(function(event) {
             event.preventDefault();
 
-            var roomNumber = $('#roomNumber').val();
+            var roomID = $('#roomID').val();
             var idNumber = $('#idNumber').val();
 
             $.ajax({
@@ -31,12 +31,16 @@
                 url: '/sac/auth',
                 contentType: 'application/json',
                 data: JSON.stringify({
-                    roomNumber: roomNumber,
+                    roomID: roomID,
                     idNumber: idNumber
                 }),
                 success: function(data) {
-                    // 显示工作模式和缺省工作温度
-                    $('#result').html('工作模式：' + data.mode + '<br>缺省工作温度：' + data.defaultTemperature);
+                    // 将数据存储在 localStorage 中
+                    localStorage.setItem('mode', data.mode);
+                    localStorage.setItem('defaultTemperature', data.defaultTemperature);
+
+                    // 跳转到 workspace.html 页面
+                    window.location.href = '/workspace';
                 },
                 error: function() {
                     // 请求失败后显示错误消息

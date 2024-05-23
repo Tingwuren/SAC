@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SAC</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="config.js"></script>
+</head>
+<body>
+<div id="result"></div>
+<p>当前温度：<span id="temperature"></span>°C</p>
+<p>输入目标温度：<input type="number" id="targetTemperature" min="16" max="30">°C</p>
+<button id="setTemperature">设置</button>
+<p>设置风速：
+    <select id="fanSpeed">
+        <option value="low">低</option>
+        <option value="medium">中</option>
+        <option value="high">高</option>
+    </select>
+</p>
+<button id="setFanSpeed">设置</button>
+
+<button id="start">开启温控</button>
+<button id="stop">关闭温控</button>
+<script>
+    $(document).ready(function() {
+        // 从 localStorage 中获取数据
+        var mode = localStorage.getItem('mode');
+        var defaultTemperature = localStorage.getItem('defaultTemperature');
+
+        // 显示工作模式和缺省工作温度
+        $('#result').html('工作模式：' + mode + '<br>缺省工作温度：' + defaultTemperature + '°C');
+    });
+
+    $(document).ready(function() {
+        // 每隔5秒获取一次最新的温度
+        setInterval(function() {
+            $.ajax({
+                url: '/sac/temperature',
+                type: 'GET',
+                contentType: 'application/json',  // 设置 Content-Type 为 application/json
+                success: function(data) {
+                    // 更新界面上的温度显示
+                    $('#temperature').text(data);
+                }
+            });
+        }, 5000);
+    });
+
+    $(document).ready(function() {
+        var timeoutId = null;  // 用于存储 setTimeout 返回的 ID
+
+        // 当用户点击设置按钮时，发送一个请求到服务器，设置目标温度
+        $('#setTemperature').click(function() {
+            var targetTemperature = $('#targetTemperature').val();
+
+            // 如果之前已经设置了一个延迟，那么取消它
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+
+            // 设置一个新的延迟，1秒后发送请求
+            timeoutId = setTimeout(function() {
+                $.ajax({
+                    url: '/sac/setTemperature',
+                    type: 'POST',
+                    data: JSON.stringify({ 'targetTemperature': targetTemperature }),
+                    contentType: 'application/json',  // 设置 Content-Type 为 application/json
+                    success: function(data) {
+                        alert('目标温度已设置为 ' + targetTemperature + '°C');
+                    }
+                });
+            }, 1000);
+        });
+    });
+
+    $(document).ready(function() {
+        // 当用户点击设置风速按钮时，发送一个请求到服务器，设置风速
+        $('#setFanSpeed').click(function() {
+            var fanSpeed = $('#fanSpeed').val();
+            $.ajax({
+                url: '/sac/setFanSpeed',
+                type: 'POST',
+                data: JSON.stringify({ 'fanSpeed': fanSpeed }),
+                contentType: 'application/json',  // 设置 Content-Type 为 application/json
+                success: function(data) {
+                    alert('风速已设置为 ' + fanSpeed);
+                }
+            });
+        });
+    });
+
+    $(document).ready(function() {
+        var type = 'start';
+        // 当用户点击开启按钮时，发送一个请求到服务器，开启温控
+        $('#start').click(function() {
+            $.ajax({
+                url: '/sac/request',
+                type: 'POST',
+                data : JSON.stringify({ 'type': type }),
+                contentType: 'application/json',  // 设置 Content-Type 为 application/json
+                success: function(data) {
+                    alert('温控已开启');
+                }
+            });
+        });
+    });
+
+    $(document).ready(function() {
+        var type = 'stop';
+        // 当用户点击关闭按钮时，发送一个请求到服务器，关闭温控
+        $('#stop').click(function() {
+            $.ajax({
+                url: '/sac/request',
+                type: 'POST',
+                data : JSON.stringify({ 'type': type }),
+                contentType: 'application/json',  // 设置 Content-Type 为 application/json
+                success: function(data) {
+                    alert('温控已关闭');
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>

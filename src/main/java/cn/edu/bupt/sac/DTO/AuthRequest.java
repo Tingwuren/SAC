@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class AuthRequest {
-    private String roomNumber;
+    private String roomID;
     private String idNumber;
 }

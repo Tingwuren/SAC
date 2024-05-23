@@ -6,21 +6,10 @@ import cn.edu.bupt.sac.entity.User;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.math.BigDecimal;
 
 @Service
-public class RoomService {
-    private Room room;
-
-    @PostConstruct
-    public void init() {
-        User user = new User();
-        SAC sac = new SAC();
-        room = new Room();
-        room.setUser(user);
-        room.setSac(sac);
-    }
-
-    public Room getRoom() {
-        return room;
-    }
+public interface RoomService {
+    Room getRoom();
+    BigDecimal getTemperature();
 }
