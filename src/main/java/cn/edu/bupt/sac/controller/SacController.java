@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -189,7 +188,13 @@ public class SacController {
         // 获取 SAC 对象
         SAC sac = Room.getSac();
         request.setFanSpeed(sac.getFanSpeed());
-        request.setEndTemp(sac.getTargetTemperature());
+        int endTemp;
+        if (sac.getTargetTemperature() != 0) {
+            endTemp = sac.getTargetTemperature();
+        } else {
+            endTemp = sac.getDefaultTemperature();
+        }
+        request.setEndTemp(endTemp);
 
         // 根据风速和温度差计算时间和能量消耗
         BigDecimal currentTemperature = Room.getTemperature();
