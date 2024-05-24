@@ -12,4 +12,7 @@ import java.math.BigDecimal;
 public interface RoomService {
     Room getRoom();
     BigDecimal getTemperature();
+    BigDecimal setAmbientTemperature(); // 获取室外温度
+
+    SAC getSAC();
 }

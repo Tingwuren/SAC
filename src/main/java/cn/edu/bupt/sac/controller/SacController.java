@@ -4,6 +4,7 @@ import cn.edu.bupt.sac.DTO.AuthRequest;
 import cn.edu.bupt.sac.DTO.AuthResponse;
 import cn.edu.bupt.sac.entity.*;
 import cn.edu.bupt.sac.service.RoomService;
+import cn.edu.bupt.sac.service.SacService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -22,21 +23,23 @@ public class SacController {
     @Value("${cac.url}")
     private String cacUrl;
     private final RoomService roomService;
+
+    private final SacService sacService;
     private final RestTemplate restTemplate;
 
     private static int nextId = 1;
 
     @Autowired
-    public SacController(RoomService roomService) {
+    public SacController(RoomService roomService, SacService sacService) {
         this.roomService = roomService;
+        this.sacService = sacService;
         this.restTemplate = new RestTemplate();
     }
     // 从控机开启
     @PostMapping(path = "/on", consumes = "application/json", produces = "application/json")
     public ResponseEntity<Map<String, String>> on() {
-        Room room = roomService.getRoom();
-        SAC sac = Room.getSac();
-        sac.turnOn();
+        sacService.turnOn();
+        System.out.println("从控机已开启");
         Map<String, String> response = new HashMap<>();
         response.put("message", "从控机已开启");
         return ResponseEntity.ok(response);
@@ -45,9 +48,8 @@ public class SacController {
     // 从控机关闭
     @PostMapping(path = "/off", consumes = "application/json", produces = "application/json")
     public String off() {
-        Room room = roomService.getRoom();
-        SAC sac = Room.getSac();
-        sac.turnOff();
+        sacService.turnOff();
+        System.out.println("从控机已关闭");
         return "从控机已关闭";
     }
 
@@ -76,10 +78,10 @@ public class SacController {
             throw new RuntimeException("无法从中央空调获取工作模式和缺省工作温度");
         }
 
-        // 获取 Room 实例
-        Room room = roomService.getRoom();
         Room.setId(request.getRoomID());
-
+        BigDecimal ambientTemperature = roomService.setAmbientTemperature();
+        System.out.println("当前室外温度：" + ambientTemperature);
+        Room.setTemperature(ambientTemperature); // 设置房间温度为室外温度
         // 创建一个 User 对象
         User user = new User();
         user.setRoomID(request.getRoomID());
@@ -89,6 +91,8 @@ public class SacController {
         SAC sac = Room.getSac();
         sac.setMode(response.getBody().getMode());
         sac.setDefaultTemperature(response.getBody().getDefaultTemperature());
+        System.out.println("从中央空调获取的工作模式：" + response.getBody().getMode());
+        System.out.println("从中央空调获取的缺省工作温度：" + response.getBody().getDefaultTemperature());
 
         // 更新 Room 实例的状态
         Room.setUser(user);
@@ -102,12 +106,10 @@ public class SacController {
         int targetTemperature = payload.get("targetTemperature");
 
         // 验证目标温度是否在有效范围内
-        if (targetTemperature < 16 || targetTemperature > 30) {
-            throw new IllegalArgumentException("目标温度必须在16°C和30°C之间");
+        if (targetTemperature < 18 || targetTemperature > 30) {
+            throw new IllegalArgumentException("目标温度必须在18°C和30°C之间");
         }
 
-        // 获取 Room 实例
-        Room room = roomService.getRoom();
 
         // 获取 SAC 对象并更新其目标温度
         SAC sac = Room.getSac();
@@ -129,41 +131,6 @@ public class SacController {
         // 获取 SAC 对象并更新其风速
         SAC sac = Room.getSac();
         sac.setFanSpeed(fanSpeed);
-
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/adjustTemperature")
-    public ResponseEntity<Void> adjustTemperature(@RequestBody Map<String, String> payload) {
-        // 从请求体中获取温度调节方向
-        String direction = payload.get("direction");
-
-        // 获取 SAC 对象
-        SAC sac = Room.getSac();
-
-        // 获取当前温度和目标温度
-        BigDecimal currentTemperature = Room.getTemperature();
-        int targetTemperature = sac.getTargetTemperature();
-
-        // 根据调节方向调整当前温度
-        BigDecimal adjustment = new BigDecimal("0.5");
-        if (direction.equals("up")) {
-            currentTemperature = currentTemperature.add(adjustment);
-        } else if (direction.equals("down")) {
-            currentTemperature = currentTemperature.subtract(adjustment);
-        } else {
-            throw new IllegalArgumentException("调节方向必须是'up'或'down'");
-        }
-
-        // 验证调整后的温度是否在有效范围内
-        BigDecimal minTemperature = new BigDecimal("16");
-        BigDecimal maxTemperature = new BigDecimal("30");
-        if (currentTemperature.compareTo(minTemperature) < 0 || currentTemperature.compareTo(maxTemperature) > 0) {
-            throw new IllegalArgumentException("调整后的温度必须在16°C和30°C之间");
-        }
-
-        // 更新当前温度
-        Room.setTemperature(currentTemperature);
 
         return ResponseEntity.ok().build();
     }
@@ -193,6 +160,7 @@ public class SacController {
             endTemp = sac.getTargetTemperature();
         } else {
             endTemp = sac.getDefaultTemperature();
+            sac.setTargetTemperature(endTemp);
         }
         request.setEndTemp(endTemp);
 
@@ -240,12 +208,15 @@ public class SacController {
         request.setCost(cost);
 
         // 发送请求到中央空调
-        ResponseEntity<Response> response = restTemplate.postForEntity(
+        ResponseEntity<Response> responseEntity = restTemplate.postForEntity(
                 cacUrl + "/cac/request",
                 request,
                 Response.class
         );
 
-        return response.getBody();
+        Response response = responseEntity.getBody();
+        System.out.println("请求处理结果：" + response);
+        sacService.handleResponse(response);
+        return responseEntity.getBody();
     }
 }
