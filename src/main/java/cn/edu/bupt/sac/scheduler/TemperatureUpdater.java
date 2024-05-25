@@ -39,30 +39,35 @@ public class TemperatureUpdater {
             BigDecimal targetTemperature = BigDecimal.valueOf(sac.getTargetTemperature());
             BigDecimal temperatureDifference = targetTemperature.subtract(temperature).abs();
 
-            BigDecimal time = BigDecimal.ONE; // 假设每度温差需要1分钟
+            BigDecimal timePerDegree = BigDecimal.ONE; // 假设每度温差需要1分钟
 
             // 根据风速调整温度变化值
             switch (sac.getFanSpeed()) {
                 case "low":
-                    time = time.multiply(BigDecimal.valueOf(1.25));
+                    timePerDegree = timePerDegree.multiply(BigDecimal.valueOf(1.25));
                     break;
                 case "medium":
                     break;
                 case "high":
-                    time = time.multiply(BigDecimal.valueOf(0.75));
+                    timePerDegree = timePerDegree.multiply(BigDecimal.valueOf(0.75));
                     break;
                 default:
                     throw new IllegalArgumentException("无效的风速");
             }
 
-            // 将每分钟的温度变化分解为每5秒的温度变化
-            time = time.divide(BigDecimal.valueOf(12), RoundingMode.HALF_UP);
+            // 计算1分钟内的温度变化
+            BigDecimal temperatureChangePerMinute = BigDecimal.ONE.divide(timePerDegree, 2, RoundingMode.HALF_UP);
+            // 计算5秒内的温度变化
+            BigDecimal temperatureChangePer5Seconds = temperatureChangePerMinute.divide(BigDecimal.valueOf(12), 2, RoundingMode.HALF_UP);
 
-            System.out.println("当前温度：" + temperature + "，目标温度：" + targetTemperature + "，每5秒变化：" + time);
+            System.out.println("每5秒的温度变化：" + temperatureChangePer5Seconds);
+
+
+            System.out.println("当前温度：" + temperature + "，目标温度：" + targetTemperature);
 
             // 根据当前温度和目标温度调整温度
             if (temperature.compareTo(targetTemperature) < 0) {
-                temperature = temperature.add(time);
+                temperature = temperature.add(temperatureChangePer5Seconds);
                 // 如果温度超过目标温度，从控机发送停风请求给中央空调
                 if (temperature.compareTo(targetTemperature) >= 0) {
                     temperature = targetTemperature;
@@ -76,7 +81,7 @@ public class TemperatureUpdater {
                     sacController.request(payload);
                 }
             } else if (temperature.compareTo(targetTemperature) > 0) {
-                temperature = temperature.subtract(time);
+                temperature = temperature.subtract(temperatureChangePer5Seconds);
             }
         }
 
