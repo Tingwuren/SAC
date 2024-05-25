@@ -84,6 +84,12 @@ public class TemperatureUpdater {
                 temperature = temperature.subtract(temperatureChangePer5Seconds);
             }
         }
+        else {
+            // Todo: 空调未工作时，房间温度随着环境温度变化（需求7.a、7.b）
+
+            // Todo: 当房间温度超过目标温度1度时，发送送风请求给中央空调（需求7.a）
+
+        }
 
         return temperature;
     }
