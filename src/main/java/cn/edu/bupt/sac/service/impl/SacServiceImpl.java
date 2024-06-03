@@ -22,6 +22,7 @@ public class SacServiceImpl implements SacService {
     public void handleResponse(Response response) {
         if ("processing".equals(response.getState())) {
             sac.setWorking(true);
+            sac.setServiceFanSpeed(sac.getSetFanSpeed()); // 设置服务风速
         } else if ("waiting".equals(response.getState()) || "finished".equals(response.getState())) {
             sac.setWorking(false);
         }
@@ -30,17 +31,25 @@ public class SacServiceImpl implements SacService {
     @Override
     public Request getRequest(String type) {
         Request request = new Request();
+        User user = Room.getUser();
+        SAC sac = Room.getSac();
 
         // 设置请求类型，开启或停止温控
         request.setType(type);
 
         // 设置请求房间ID
-        User user = Room.getUser();
         request.setRoomId(user.getRoomID());
 
         // 设置请求风速
-        SAC sac = Room.getSac();
-        request.setFanSpeed(sac.getFanSpeed());
+        String speed;
+        if (sac.getSetFanSpeed() != null) {
+            speed = sac.getSetFanSpeed();
+        } else {
+            speed = sac.getDefaultFanSpeed();
+            sac.setSetFanSpeed(speed);
+        }
+        request.setFanSpeed(speed);
+        System.out.println("设置请求风速为" + sac.getSetFanSpeed());
 
         // 设置目标温度，由于需求4.b，该字段保留
         int endTemp;

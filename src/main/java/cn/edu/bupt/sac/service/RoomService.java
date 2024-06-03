@@ -15,4 +15,6 @@ public interface RoomService {
     BigDecimal setAmbientTemperature(); // 获取室外温度
 
     SAC getSAC();
+
+    BigDecimal getAmbientTemperature();
 }

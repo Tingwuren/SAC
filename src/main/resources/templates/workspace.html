@@ -19,17 +19,24 @@
     </select>
 </p>
 <button id="setFanSpeed">设置</button>
-
+<p>
 <button id="start">开启温控</button>
 <button id="stop">关闭温控</button>
+</p>
 <script>
     $(document).ready(function() {
         // 从 localStorage 中获取数据
         var mode = localStorage.getItem('mode');
         var defaultTemperature = localStorage.getItem('defaultTemperature');
+        var defaultFanSpeed = localStorage.getItem('defaultFanSpeed');
+        var defaultFrequency = localStorage.getItem('defaultFrequency');
 
         // 显示工作模式和缺省工作温度
-        $('#result').html('工作模式：' + mode + '<br>缺省工作温度：' + defaultTemperature + '°C');
+        $('#result').html('工作模式：' + mode + '<br>'
+            + '缺省工作温度：' + defaultTemperature + '°C' + '<br>'
+            + '缺省风速：' + defaultFanSpeed + '<br>'
+            + '每分钟向CAC更新：' + defaultFrequency + '次'
+        )
     });
 
     $(document).ready(function() {
@@ -84,36 +91,44 @@
                 data: JSON.stringify({ 'fanSpeed': fanSpeed }),
                 contentType: 'application/json',  // 设置 Content-Type 为 application/json
                 success: function(data) {
-                    alert('风速已设置为 ' + fanSpeed);
+                    alert('请求风速已设置为 ' + fanSpeed + '请重新开始温控');
                 }
             });
         });
     });
 
     $(document).ready(function() {
-        var type = 'start';
         // 当用户点击开启按钮时，发送一个请求到服务器，开启温控
         $('#start').click(function() {
             $.ajax({
-                url: '/sac/request',
+                url: '/sac/start',
                 type: 'POST',
-                data : JSON.stringify({ 'type': type }),
+                data : JSON.stringify({ 'isService': true }),
                 contentType: 'application/json',  // 设置 Content-Type 为 application/json
                 success: function(data) {
                     alert('温控已开启');
                 }
             });
+
+            $.ajax({
+                url: '/sac/request',
+                type: 'POST',
+                data : JSON.stringify({ 'type': 'start' }),
+                contentType: 'application/json',  // 设置 Content-Type 为 application/json
+                success: function(data) {
+                    // 处理响应
+                }
+            });
         });
     });
 
     $(document).ready(function() {
-        var type = 'stop';
         // 当用户点击关闭按钮时，发送一个请求到服务器，关闭温控
         $('#stop').click(function() {
             $.ajax({
-                url: '/sac/request',
+                url: '/sac/stop',
                 type: 'POST',
-                data : JSON.stringify({ 'type': type }),
+                data : JSON.stringify({ 'isService': false }),
                 contentType: 'application/json',  // 设置 Content-Type 为 application/json
                 success: function(data) {
                     alert('温控已关闭');

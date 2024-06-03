@@ -71,4 +71,9 @@ public class RoomServiceImpl implements RoomService {
     public SAC getSAC() {
         return Room.getSac();  // 获取 Room 对象的 SAC
     }
+
+    @Override
+    public BigDecimal getAmbientTemperature() {
+        return Room.getAmbientTemperature();  // 获取 Room 对象的室外温度
+    }
 }

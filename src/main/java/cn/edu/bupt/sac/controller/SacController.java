@@ -64,7 +64,7 @@ public class SacController {
             throw new IllegalArgumentException("房间号和身份证号不能为空");
         }
 
-        // 从中央空调获取工作模式和缺省工作温度
+        // 从中央空调获取工作模式、缺省工作温度、默认风速、默认频率
         ResponseEntity<AuthResponse> response = restTemplate.postForEntity(
                 cacUrl + "/cac/auth",
                 request,
@@ -88,8 +88,12 @@ public class SacController {
         SAC sac = Room.getSac();
         sac.setMode(response.getBody().getMode());
         sac.setDefaultTemperature(response.getBody().getDefaultTemperature());
+        sac.setDefaultFanSpeed(response.getBody().getDefaultFanSpeed());
+        sac.setDefaultFrequency(response.getBody().getDefaultFrequency());
         System.out.println("从中央空调获取的工作模式：" + response.getBody().getMode());
         System.out.println("从中央空调获取的缺省工作温度：" + response.getBody().getDefaultTemperature());
+        System.out.println("从中央空调获取的默认风速：" + response.getBody().getDefaultFanSpeed());
+        System.out.println("从中央空调获取的默认频率：" + response.getBody().getDefaultFrequency());
 
         // 更新 Room 实例的状态
         Room.setUser(user);
@@ -127,8 +131,8 @@ public class SacController {
 
         // 获取 SAC 对象并更新其风速
         SAC sac = Room.getSac();
-        sac.setFanSpeed(fanSpeed);
-        System.out.println(fanSpeed);
+        sac.setSetFanSpeed(fanSpeed);
+        System.out.println("设置请求风速为"+fanSpeed);
         return ResponseEntity.ok().build();
     }
 
@@ -139,6 +143,7 @@ public class SacController {
 
         Request request = sacService.getRequest(type);
 
+        System.out.println("发送请求：" + request);
         // 发送请求到中央空调
         ResponseEntity<Response> responseEntity = restTemplate.postForEntity(
                 cacUrl + "/cac/request",
@@ -150,5 +155,24 @@ public class SacController {
         System.out.println("请求处理结果：" + response);
         sacService.handleResponse(response);
         return responseEntity.getBody();
+    }
+
+    @PostMapping("/start")
+    public void start(@RequestBody Map<String, Boolean> payload) {
+        boolean isService = payload.get("isService");
+        SAC sac = Room.getSac();
+        sac.setIsService(isService);
+    }
+
+    @PostMapping("/stop")
+    public void stop(@RequestBody Map<String, Boolean> payload) {
+        boolean isService = payload.get("isService");
+        SAC sac = Room.getSac();
+        sac.setIsService(isService);
+        if (sac.isWorking()) {
+            Map<String, String> request = new HashMap<>();
+            request.put("type", "stop");
+            request(request);
+        }
     }
 }
