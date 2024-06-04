@@ -63,4 +63,14 @@ public class SacServiceImpl implements SacService {
 
         return request;
     }
+
+    @Override
+    public boolean isOn() {
+        return sac.isOn();
+    }
+
+    @Override
+    public int getFrequency() {
+        return sac.getFrequency();
+    }
 }

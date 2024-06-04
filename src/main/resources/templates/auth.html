@@ -61,7 +61,7 @@
             <label for="idNumber">身份证号：</label>
             <input type="text" id="idNumber" name="idNumber" class="form-control" required>
         </div>
-        <input type="submit" value="提交" class="btn btn-primary">
+        <input type="submit" value="开启从控机" class="btn btn-primary">
     </form>
     <div id="result"></div>
 </div>
@@ -89,6 +89,8 @@
                     localStorage.setItem('defaultTemperature', data.defaultTemperature);
                     localStorage.setItem('defaultFanSpeed', data.defaultFanSpeed);
                     localStorage.setItem('defaultFrequency', data.defaultFrequency);
+                    localStorage.setItem('roomID', roomID);
+                    localStorage.setItem('idNumber', idNumber);
 
                     // 跳转到 workspace.html 页面
                     window.location.href = '/workspace';

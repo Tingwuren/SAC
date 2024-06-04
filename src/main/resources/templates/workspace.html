@@ -7,7 +7,16 @@
     <script src="config.js"></script>
 </head>
 <body>
+
+<button id="offButton">关闭从控机</button>
 <div id="result"></div>
+
+<p>房间ID：<span id="roomId"></span></p>
+<p>用户ID：<span id="idNumber"></span></p>
+
+<p>房间消耗能量：<span id="energy"></span></p>
+<p>房间需支付金额：<span id="cost"></span></p>
+
 <p>当前温度：<span id="temperature"></span>°C</p>
 <p>输入目标温度：<input type="number" id="targetTemperature" min="18" max="30">°C</p>
 <button id="setTemperature">设置</button>
@@ -30,6 +39,8 @@
         var defaultTemperature = localStorage.getItem('defaultTemperature');
         var defaultFanSpeed = localStorage.getItem('defaultFanSpeed');
         var defaultFrequency = localStorage.getItem('defaultFrequency');
+        var roomID = localStorage.getItem('roomID');
+        var idNumber = localStorage.getItem('idNumber');
 
         // 显示工作模式和缺省工作温度
         $('#result').html('工作模式：' + mode + '<br>'
@@ -37,6 +48,8 @@
             + '缺省风速：' + defaultFanSpeed + '<br>'
             + '每分钟向CAC更新：' + defaultFrequency + '次'
         )
+        $('#roomId').text(roomID);
+        $('#idNumber').text(idNumber);
     });
 
     $(document).ready(function() {
@@ -135,6 +148,38 @@
                 }
             });
         });
+    });
+
+    $(document).ready(function() {
+        // 每隔5秒获取一次最新的温度
+        setInterval(function() {
+            $.ajax({
+                url: '/sac/status',
+                type: 'GET',
+                contentType: 'application/json',  // 设置 Content-Type 为 application/json
+                success: function(data) {
+                    // 更新界面上的温度显示
+                    $('#energy').text(data.energy);
+                    $('#cost').text(data.cost);
+                }
+            });
+        }, 5000);
+    });
+    document.getElementById('offButton').addEventListener('click', function() {
+        fetch('/sac/off', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => response.text())
+            .then(data => {
+                console.log(data);
+                window.location.href = '/auth';
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
     });
 </script>
 </body>

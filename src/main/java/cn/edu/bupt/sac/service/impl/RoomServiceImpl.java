@@ -1,10 +1,17 @@
 package cn.edu.bupt.sac.service.impl;
 
+import cn.edu.bupt.sac.DTO.AuthResponse;
+import cn.edu.bupt.sac.DTO.StateRequest;
+import cn.edu.bupt.sac.DTO.StateResponse;
 import cn.edu.bupt.sac.entity.Room;
 import cn.edu.bupt.sac.entity.SAC;
 import cn.edu.bupt.sac.entity.User;
+import cn.edu.bupt.sac.scheduler.StateUpdater;
 import cn.edu.bupt.sac.service.RoomService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
@@ -14,6 +21,13 @@ import java.util.Calendar;
 @Service
 public class RoomServiceImpl implements RoomService {
     private final Room room = new Room();
+    private final RestTemplate restTemplate;
+    @Value("${cac.url}")
+    private String cacUrl;
+
+    public RoomServiceImpl(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
     @PostConstruct
     public void init() {
@@ -75,5 +89,33 @@ public class RoomServiceImpl implements RoomService {
     @Override
     public BigDecimal getAmbientTemperature() {
         return Room.getAmbientTemperature();  // 获取 Room 对象的室外温度
+    }
+
+    @Override
+    public void updateRoomState() {
+        // 获取房间状态
+        StateRequest stateRequest = new StateRequest();
+        stateRequest.setRoomID(Room.getUser().getRoomID());
+        stateRequest.setTemperature(Room.getTemperature());
+        stateRequest.setOn(Room.getSac().isOn());
+
+        // 发送请求给中央空调
+        ResponseEntity<StateResponse> response = restTemplate.postForEntity(
+                cacUrl + "/cac/state",
+                stateRequest,
+                StateResponse.class
+        );
+        System.out.println("发送状态请求：" + stateRequest + "，收到响应：" + response.getBody() );
+
+        if (response.getBody() == null) {
+            throw new RuntimeException("无法从中央空调获取房间状态");
+        }
+        int frequency = response.getBody().getFrequency();
+        Room.getSac().setFrequency(frequency);
+
+        BigDecimal energy = response.getBody().getEnergy();
+        Room.setEnergy(energy);
+        BigDecimal cost = response.getBody().getCost();
+        Room.setCost(cost);
     }
 }

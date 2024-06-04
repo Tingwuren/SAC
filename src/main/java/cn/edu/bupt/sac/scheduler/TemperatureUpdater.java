@@ -69,16 +69,29 @@ public class TemperatureUpdater {
                 if (temperature.compareTo(targetTemperature) >= 0) {
                     temperature = targetTemperature;
                     System.out.println("温度已达到目标温度，发送停风请求给中央空调");
+
                     // 发送停风请求给中央空调
-                    // 创建停风请求
                     Map<String, String> payload = new HashMap<>();
                     payload.put("type", "stop");
-
-                    // 使用SacController实例发送停风请求给中央空调
                     sacController.request(payload);
                 }
             } else if (temperature.compareTo(targetTemperature) > 0) {
                 temperature = temperature.subtract(temperatureChangePer5Seconds);
+                // 如果温度低于目标温度，从控机发送停风请求给中央空调
+                if (temperature.compareTo(targetTemperature) <= 0) {
+                    temperature = targetTemperature;
+                    System.out.println("温度已达到目标温度，发送停风请求给中央空调");
+
+                    // 发送停风请求给中央空调
+                    Map<String, String> payload = new HashMap<>();
+                    payload.put("type", "stop");
+                    sacController.request(payload);
+                }
+            } else {
+                Map<String, String> payload = new HashMap<>();
+                payload.put("type", "stop");
+                // 使用SacController实例发送停风请求给中央空调
+                sacController.request(payload);
             }
         }
         else if (temperature != null) {

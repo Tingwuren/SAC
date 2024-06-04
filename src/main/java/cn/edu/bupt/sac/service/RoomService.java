@@ -17,4 +17,6 @@ public interface RoomService {
     SAC getSAC();
 
     BigDecimal getAmbientTemperature();
+
+    void updateRoomState();
 }

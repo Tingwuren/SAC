@@ -2,7 +2,10 @@ package cn.edu.bupt.sac.controller;
 
 import cn.edu.bupt.sac.DTO.AuthRequest;
 import cn.edu.bupt.sac.DTO.AuthResponse;
+import cn.edu.bupt.sac.DTO.StateRequest;
+import cn.edu.bupt.sac.DTO.StateResponse;
 import cn.edu.bupt.sac.entity.*;
+import cn.edu.bupt.sac.scheduler.StateUpdater;
 import cn.edu.bupt.sac.service.RoomService;
 import cn.edu.bupt.sac.service.SacService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,19 +27,22 @@ public class SacController {
     private final SacService sacService;
     private final RestTemplate restTemplate;
 
+    private final StateUpdater stateUpdater;
+
     private static int nextId = 1;
 
     @Autowired
-    public SacController(RoomService roomService, SacService sacService) {
+    public SacController(RoomService roomService, SacService sacService, StateUpdater stateUpdater) {
         this.roomService = roomService;
         this.sacService = sacService;
         this.restTemplate = new RestTemplate();
+        this.stateUpdater = stateUpdater;
     }
     // 从控机开启
     @PostMapping(path = "/on", consumes = "application/json", produces = "application/json")
     public ResponseEntity<Map<String, String>> on() {
-        sacService.turnOn();
-        System.out.println("从控机已开启");
+        // sacService.turnOn();
+        // System.out.println("从控机已开启");
         Map<String, String> response = new HashMap<>();
         response.put("message", "从控机已开启");
         return ResponseEntity.ok(response);
@@ -75,7 +81,9 @@ public class SacController {
             throw new RuntimeException("无法从中央空调获取工作模式和缺省工作温度");
         }
 
-        Room.setId(request.getRoomID());
+        sacService.turnOn();
+        System.out.println("从控机已开启");
+
         BigDecimal ambientTemperature = roomService.setAmbientTemperature();
         System.out.println("当前室外温度：" + ambientTemperature);
         Room.setTemperature(ambientTemperature); // 设置房间温度为室外温度
@@ -90,6 +98,10 @@ public class SacController {
         sac.setDefaultTemperature(response.getBody().getDefaultTemperature());
         sac.setDefaultFanSpeed(response.getBody().getDefaultFanSpeed());
         sac.setDefaultFrequency(response.getBody().getDefaultFrequency());
+
+        stateUpdater.setFrequency(response.getBody().getDefaultFrequency());
+        stateUpdater.scheduleTask();
+
         System.out.println("从中央空调获取的工作模式：" + response.getBody().getMode());
         System.out.println("从中央空调获取的缺省工作温度：" + response.getBody().getDefaultTemperature());
         System.out.println("从中央空调获取的默认风速：" + response.getBody().getDefaultFanSpeed());
@@ -157,14 +169,14 @@ public class SacController {
         return responseEntity.getBody();
     }
 
-    @PostMapping("/start")
+    @PostMapping("/start") // 开启温控服务
     public void start(@RequestBody Map<String, Boolean> payload) {
         boolean isService = payload.get("isService");
         SAC sac = Room.getSac();
         sac.setIsService(isService);
     }
 
-    @PostMapping("/stop")
+    @PostMapping("/stop") // 关闭温控服务
     public void stop(@RequestBody Map<String, Boolean> payload) {
         boolean isService = payload.get("isService");
         SAC sac = Room.getSac();
@@ -174,5 +186,13 @@ public class SacController {
             request.put("type", "stop");
             request(request);
         }
+    }
+
+    @GetMapping("/status") // 获取用量和金额
+    public Map<String, BigDecimal> status() {
+        Map<String, BigDecimal> response = new HashMap<>();
+        response.put("energy", Room.getEnergy());
+        response.put("cost", Room.getCost());
+        return response;
     }
 }
