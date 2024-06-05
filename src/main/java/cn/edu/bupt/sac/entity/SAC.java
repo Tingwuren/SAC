@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 // 从控机类（Slave Air Conditioner）
 public class SAC {
     private boolean isOn; // 空调是否开启
+    private boolean isAuth; // 空调是否认证
     private boolean isWorking; // 空调是否工作
     private boolean isService; // 空调是否服务
     private String mode; // 工作模式（制冷/供暖）

@@ -13,6 +13,16 @@ public class SacServiceImpl implements SacService {
     }
 
     @Override
+    public void authSuccess() {
+        sac.setAuth(true);
+    }
+
+    @Override
+    public void authCancel() {
+        sac.setAuth(false);
+    }
+
+    @Override
     public void turnOff() {
         sac.setOn(false);
         System.out.println("从控机关闭");
@@ -67,6 +77,11 @@ public class SacServiceImpl implements SacService {
     @Override
     public boolean isOn() {
         return sac.isOn();
+    }
+
+    @Override
+    public boolean isAuth() {
+        return sac.isAuth();
     }
 
     @Override

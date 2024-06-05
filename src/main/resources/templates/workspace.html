@@ -5,33 +5,93 @@
     <title>SAC</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="config.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border: none;
+        }
+        p {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        #result {
+            background-color: #ddd;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
 </head>
 <body>
+<div class="container">
+    <div id="result"></div>
 
-<button id="offButton">关闭从控机</button>
-<div id="result"></div>
-
-<p>房间ID：<span id="roomId"></span></p>
-<p>用户ID：<span id="idNumber"></span></p>
-
-<p>房间消耗能量：<span id="energy"></span></p>
-<p>房间需支付金额：<span id="cost"></span></p>
-
-<p>当前温度：<span id="temperature"></span>°C</p>
-<p>输入目标温度：<input type="number" id="targetTemperature" min="18" max="30">°C</p>
-<button id="setTemperature">设置</button>
-<p>设置风速：
-    <select id="fanSpeed">
-        <option value="low">低</option>
-        <option value="medium">中</option>
-        <option value="high">高</option>
-    </select>
-</p>
-<button id="setFanSpeed">设置</button>
-<p>
-<button id="start">开启温控</button>
-<button id="stop">关闭温控</button>
-</p>
+    <table>
+        <tr>
+            <td>房间 ID</td>
+            <td><span id="roomId"></span></td>
+        </tr>
+        <tr>
+            <td>用户 ID</td>
+            <td><span id="idNumber"></span></td>
+        </tr>
+        <tr>
+            <td>消耗能量</td>
+            <td><span id="energy"></span></td>
+        </tr>
+        <tr>
+            <td>需付金额</td>
+            <td><span id="cost"></span></td>
+        </tr>
+        <tr>
+            <td>当前温度</td>
+            <td><span id="temperature"></span>°C</td>
+        </tr>
+    </table>
+    <p>输入目标温度：
+        <input type="number" id="targetTemperature" min="18" max="30">°C
+        <button id="setTemperature">设置</button>
+        设置风速：
+        <select id="fanSpeed">
+            <option value="low">低</option>
+            <option value="medium">中</option>
+            <option value="high">高</option>
+        </select>
+        <button id="setFanSpeed">设置</button>
+    </p>
+    <p>
+        <button id="start">开启温控</button>
+        <button id="stop">关闭温控</button>
+        <button id="offButton">关闭从控机</button>
+    </p>
+</div>
 <script>
     $(document).ready(function() {
         // 从 localStorage 中获取数据
@@ -43,15 +103,14 @@
         var idNumber = localStorage.getItem('idNumber');
 
         // 显示工作模式和缺省工作温度
-        $('#result').html('工作模式：' + mode + '<br>'
-            + '缺省工作温度：' + defaultTemperature + '°C' + '<br>'
-            + '缺省风速：' + defaultFanSpeed + '<br>'
-            + '每分钟向CAC更新：' + defaultFrequency + '次'
-        )
+        var resultHTML = '<table>' +
+            '<tr><td>工作模式</td><td>' + mode + '</td><td>缺省工作温度</td><td>' + defaultTemperature + '°C</td></tr>' +
+            '<tr><td>缺省风速</td><td>' + defaultFanSpeed + '</td><td>默认每分钟更新</td><td>' + defaultFrequency + '次</td></tr>' +
+            '</table>';
+        $('#result').html(resultHTML);
         $('#roomId').text(roomID);
         $('#idNumber').text(idNumber);
     });
-
     $(document).ready(function() {
         // 每隔5秒获取一次最新的温度
         setInterval(function() {
@@ -175,7 +234,7 @@
             .then(response => response.text())
             .then(data => {
                 console.log(data);
-                window.location.href = '/auth';
+                window.location.href = '/';
             })
             .catch((error) => {
                 console.error('Error:', error);

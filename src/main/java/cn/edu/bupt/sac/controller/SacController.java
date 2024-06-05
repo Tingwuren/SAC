@@ -41,8 +41,8 @@ public class SacController {
     // 从控机开启
     @PostMapping(path = "/on", consumes = "application/json", produces = "application/json")
     public ResponseEntity<Map<String, String>> on() {
-        // sacService.turnOn();
-        // System.out.println("从控机已开启");
+        sacService.turnOn();
+        System.out.println("从控机已开启");
         Map<String, String> response = new HashMap<>();
         response.put("message", "从控机已开启");
         return ResponseEntity.ok(response);
@@ -52,6 +52,7 @@ public class SacController {
     @PostMapping(path = "/off", consumes = "application/json", produces = "application/json")
     public String off() {
         sacService.turnOff();
+        sacService.authCancel();
         System.out.println("从控机已关闭");
         return "从控机已关闭";
     }
@@ -81,8 +82,8 @@ public class SacController {
             throw new RuntimeException("无法从中央空调获取工作模式和缺省工作温度");
         }
 
-        sacService.turnOn();
-        System.out.println("从控机已开启");
+        sacService.authSuccess();
+        System.out.println("用户认证成功！");
 
         BigDecimal ambientTemperature = roomService.setAmbientTemperature();
         System.out.println("当前室外温度：" + ambientTemperature);

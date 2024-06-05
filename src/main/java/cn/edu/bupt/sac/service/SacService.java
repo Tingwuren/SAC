@@ -16,4 +16,10 @@ public interface SacService {
     Request getRequest(String type);
 
     boolean isOn();
+
+    boolean isAuth();
+
+    void authSuccess();
+
+    void authCancel();
 }

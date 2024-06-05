@@ -57,7 +57,7 @@ public class StateUpdater {
     }
     @Scheduled(fixedRate = 5000) // 每5秒执行一次，从CAC获取刷新频率
     public void getFrequency() {
-        if (!sacService.isOn()) {
+        if (!sacService.isAuth()) {
             return;
         }
         // 从中央空调获取刷新频率
