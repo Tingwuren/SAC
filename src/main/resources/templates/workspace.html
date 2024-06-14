@@ -86,6 +86,8 @@
         </select>
         <button id="setFanSpeed">设置</button>
     </p>
+    <div>温控开启状态: <span id="isService"></span></div>
+    <div>正在送风状态: <span id="isWorking"></span></div>
     <p>
         <button id="start">开启温控</button>
         <button id="stop">关闭温控</button>
@@ -146,7 +148,10 @@
                     data: JSON.stringify({ 'targetTemperature': targetTemperature }),
                     contentType: 'application/json',  // 设置 Content-Type 为 application/json
                     success: function(data) {
-                        alert('目标温度已设置为 ' + targetTemperature + '°C');
+                        alert(data);  // 显示服务器的响应
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        alert(jqXHR.responseText);  // 显示错误信息
                     }
                 });
             }, 1000);
@@ -163,7 +168,7 @@
                 data: JSON.stringify({ 'fanSpeed': fanSpeed }),
                 contentType: 'application/json',  // 设置 Content-Type 为 application/json
                 success: function(data) {
-                    alert('请求风速已设置为 ' + fanSpeed + '请重新开始温控');
+                    alert('请求风速已设置为 ' + fanSpeed);
                 }
             });
         });
@@ -220,6 +225,9 @@
                     // 更新界面上的温度显示
                     $('#energy').text(data.energy);
                     $('#cost').text(data.cost);
+                    // 更新温控开启状态和正在送风状态
+                    $('#isService').text(data.isService ? "开启" : "关闭");
+                    $('#isWorking').text(data.isWorking ? "正在送风" : "停止送风");
                 }
             });
         }, 5000);

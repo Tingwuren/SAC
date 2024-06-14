@@ -2,6 +2,8 @@ package cn.edu.bupt.sac.entity;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 @Data
 // 请求类
 public class Request {
@@ -9,4 +11,5 @@ public class Request {
     private String type; // 请求类型（开始送风/停止送风）
     private String fanSpeed; // 风速（高/中/低）
     private int targetTemp; // 目标温度
+    private BigDecimal temperature; // 房间温度
 }

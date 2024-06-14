@@ -69,6 +69,11 @@ public class StateUpdater {
         if (newFrequency != null && newFrequency > 0 && newFrequency != frequency) {
             setFrequency(newFrequency);
             rescheduleTask(); // 如果频率发生变化，立即重新调度任务
+        } else if (newFrequency != null && newFrequency == 0) {
+            // 主控机关闭了服务，从控机也应该关闭服务
+            Room.getSac().setIsService(false);
+            System.out.println("主控机关闭了服务，从控机也应该关闭服务");
+            Room.getSac().setWorking(false);
         }
     }
 

@@ -29,8 +29,6 @@ public class SacController {
 
     private final StateUpdater stateUpdater;
 
-    private static int nextId = 1;
-
     @Autowired
     public SacController(RoomService roomService, SacService sacService, StateUpdater stateUpdater) {
         this.roomService = roomService;
@@ -51,6 +49,12 @@ public class SacController {
     // 从控机关闭
     @PostMapping(path = "/off", consumes = "application/json", produces = "application/json")
     public String off() {
+        // 创建一个 Map 并将 isService 设置为 false
+        Map<String, Boolean> payload = new HashMap<>();
+        payload.put("isService", false);
+
+        // 调用 stop 方法来停止温控服务
+        stop(payload);
         sacService.turnOff();
         sacService.authCancel();
         System.out.println("从控机已关闭");
@@ -115,21 +119,35 @@ public class SacController {
     }
 
     @PostMapping("/setTemperature")
-    public ResponseEntity<Void> setTemperature(@RequestBody Map<String, Integer> payload) {
+    public ResponseEntity<String> setTemperature(@RequestBody Map<String, Integer> payload) {
         // 从请求体中获取目标温度
         int targetTemperature = payload.get("targetTemperature");
 
-        // 验证目标温度是否在有效范围内
-        if (targetTemperature < 18 || targetTemperature > 30) {
-            throw new IllegalArgumentException("目标温度必须在18°C和30°C之间");
+        // 获取 SAC 对象
+        SAC sac = Room.getSac();
+
+        // 获取 SAC 的工作模式
+        String mode = sac.getMode();
+
+        // 根据工作模式设置温度范围
+        int[] temperatureRange;
+        if ("cooling".equals(mode)) {
+            temperatureRange = new int[]{18, 25};
+        } else if ("heating".equals(mode)) {
+            temperatureRange = new int[]{25, 30};
+        } else {
+            return ResponseEntity.badRequest().body("无效的工作模式");
         }
 
+        // 验证目标温度是否在有效范围内
+        if (targetTemperature < temperatureRange[0] || targetTemperature > temperatureRange[1]) {
+            return ResponseEntity.badRequest().body("目标温度必须在" + temperatureRange[0] + "°C和" + temperatureRange[1] + "°C之间");
+        }
 
-        // 获取 SAC 对象并更新其目标温度
-        SAC sac = Room.getSac();
+        // 更新 SAC 的目标温度
         sac.setTargetTemperature(targetTemperature);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("温度已成功设置为 " + targetTemperature + "°C");
     }
 
     @PostMapping("/setFanSpeed")
@@ -146,6 +164,14 @@ public class SacController {
         SAC sac = Room.getSac();
         sac.setSetFanSpeed(fanSpeed);
         System.out.println("设置请求风速为"+fanSpeed);
+
+        // 如果空调处于服务状态，立即发送开启温控请求
+        if (sac.isService()) {
+            Map<String, String> requestPayload = new HashMap<>();
+            requestPayload.put("type", "start");
+            request(requestPayload);
+        }
+
         return ResponseEntity.ok().build();
     }
 
@@ -190,10 +216,12 @@ public class SacController {
     }
 
     @GetMapping("/status") // 获取用量和金额
-    public Map<String, BigDecimal> status() {
-        Map<String, BigDecimal> response = new HashMap<>();
+    public Map<String, Object> status() {
+        Map<String, Object> response = new HashMap<>();
         response.put("energy", Room.getEnergy());
         response.put("cost", Room.getCost());
+        response.put("isService", Room.getSac().isService());
+        response.put("isWorking", Room.getSac().isWorking());
         return response;
     }
 }

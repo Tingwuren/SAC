@@ -71,6 +71,9 @@ public class SacServiceImpl implements SacService {
         }
         request.setTargetTemp(endTemp);
 
+        // 设置房间温度
+        request.setTemperature(Room.getTemperature());
+
         return request;
     }
 
